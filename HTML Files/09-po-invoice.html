@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VendorBridge — Purchase Order & Invoice</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --paper:#EDE6D6; --paper-deep:#E4DBC7; --paper-line:#C9C0A8; --ink:#231F16; --ink-soft:#4A4535;
+  --muted:#6b6349; --oxblood:#8A3223; --green:#4B6B4A; --card:#F4EFE3; --radius:2px;
+  --sidebar:#231F16; --sidebar-line:rgba(237,230,214,0.14); --sidebar-text:#D8CFB8; --sidebar-muted:#8C8368;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',sans-serif; line-height:1.5;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+h1,h2,h3{font-family:'Fraunces',serif; font-weight:600;}
+a{color:inherit; text-decoration:none;}
+.app{display:flex; min-height:100vh;}
+.sidebar{width:238px; background:var(--sidebar); color:var(--sidebar-text); flex-shrink:0; display:flex; flex-direction:column; padding:26px 0;}
+.sb-logo{display:flex; align-items:center; gap:10px; font-family:'Fraunces'; font-weight:700; font-size:17px; padding:0 24px 26px; border-bottom:1px solid var(--sidebar-line);}
+.sb-logo-mark{width:20px;height:20px;border:2px solid #D89A57;border-radius:50%;position:relative;flex-shrink:0;}
+.sb-logo-mark::before{content:"";position:absolute;inset:4px;border:1px solid #D89A57;border-radius:50%;}
+.sb-section{padding:20px 24px 8px; font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--sidebar-muted);}
+.sb-nav{display:flex; flex-direction:column;}
+.sb-item{padding:10px 24px; font-size:13.5px; display:flex; align-items:center; gap:12px; color:var(--sidebar-muted); border-left:2px solid transparent;}
+.sb-item .dot{width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0;}
+.sb-item.active{color:var(--paper); background:rgba(237,230,214,0.06); border-left-color:#D89A57;}
+.sb-foot{margin-top:auto; padding:18px 24px; border-top:1px solid var(--sidebar-line); font-size:12.5px;}
+.sb-user{display:flex; align-items:center; gap:10px;}
+.sb-avatar{width:30px; height:30px; border-radius:50%; background:#8A3223; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono'; font-size:12px; flex-shrink:0;}
+.sb-user .role{font-family:'IBM Plex Mono'; font-size:10.5px; color:var(--sidebar-muted); text-transform:uppercase;}
+.main{flex:1; display:flex; flex-direction:column; min-width:0;}
+.topbar{display:flex; justify-content:space-between; align-items:center; padding:20px 36px; border-bottom:1.5px solid var(--ink);}
+.topbar h1{font-size:22px;}
+.topbar .sub{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--muted); margin-top:4px;}
+.top-actions{display:flex; gap:10px;}
+.btn{padding:10px 16px; border-radius:var(--radius); border:1.5px solid var(--ink); background:var(--ink); color:var(--paper); font-family:'IBM Plex Mono'; font-size:12px; cursor:pointer;}
+.btn:hover{background:var(--oxblood); border-color:var(--oxblood);}
+.btn-ghost{background:transparent; color:var(--ink);}
+.content{padding:34px 36px 70px; display:flex; justify-content:center;}
+
+.document{width:100%; max-width:820px; background:var(--card); border:1.5px solid var(--ink); padding:50px 56px; position:relative;}
+.doc-stamp{
+  position:absolute; top:44px; right:56px; width:96px; height:96px; border:2.5px solid var(--green);
+  border-radius:50%; color:var(--green); display:flex; align-items:center; justify-content:center; text-align:center;
+  font-family:'IBM Plex Mono'; font-weight:600; font-size:10px; transform:rotate(-12deg); letter-spacing:0.04em;
+}
+.doc-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:36px; border-bottom:2px solid var(--ink); padding-bottom:26px;}
+.doc-logo{display:flex; align-items:center; gap:10px; font-family:'Fraunces'; font-weight:700; font-size:18px; margin-bottom:16px;}
+.doc-logo-mark{width:20px;height:20px;border:2px solid var(--oxblood);border-radius:50%;position:relative;}
+.doc-logo-mark::before{content:"";position:absolute;inset:4px;border:1px solid var(--oxblood);border-radius:50%;}
+.doc-head .addr{font-size:12.5px; color:var(--muted); max-width:220px; line-height:1.6;}
+.doc-title{text-align:right;}
+.doc-title h2{font-size:26px; margin-bottom:6px;}
+.doc-title .num{font-family:'IBM Plex Mono'; font-size:13px; color:var(--oxblood);}
+.doc-title .date{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--muted); margin-top:4px;}
+
+.doc-meta{display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:32px;}
+.doc-meta .block h5{font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; letter-spacing:0.05em;}
+.doc-meta .block p{font-size:13.5px; line-height:1.6;}
+.doc-meta .block p b{display:block; font-size:14.5px; margin-bottom:2px;}
+
+table.items{width:100%; border-collapse:collapse; margin-bottom:24px;}
+table.items th{text-align:left; font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; color:var(--muted); padding:10px 4px; border-bottom:1.5px solid var(--ink);}
+table.items td{padding:12px 4px; border-bottom:1px solid var(--paper-line); font-size:13.5px;}
+table.items td.num, table.items th.num{text-align:right; font-family:'IBM Plex Mono';}
+
+.totals{display:flex; justify-content:flex-end;}
+.totals table{border-collapse:collapse; width:280px;}
+.totals td{padding:7px 4px; font-size:13.5px;}
+.totals td.label{color:var(--muted);}
+.totals td.val{text-align:right; font-family:'IBM Plex Mono';}
+.totals tr.grand td{border-top:1.5px solid var(--ink); padding-top:12px; font-size:17px; font-weight:600;}
+.totals tr.grand td.val{font-family:'IBM Plex Mono'; color:var(--oxblood);}
+
+.doc-footer{margin-top:40px; padding-top:20px; border-top:1px solid var(--paper-line); font-size:11.5px; color:var(--muted); display:flex; justify-content:space-between;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-logo"><span class="sb-logo-mark"></span>VendorBridge</div>
+    <div class="sb-section">Overview</div>
+    <div class="sb-nav"><a class="sb-item"><span class="dot"></span>Dashboard</a><a class="sb-item"><span class="dot"></span>Activity &amp; Logs</a></div>
+    <div class="sb-section">Procurement</div>
+    <div class="sb-nav">
+      <a class="sb-item"><span class="dot"></span>Vendors</a>
+      <a class="sb-item"><span class="dot"></span>RFQs</a>
+      <a class="sb-item"><span class="dot"></span>Quotations</a>
+      <a class="sb-item"><span class="dot"></span>Approvals</a>
+      <a class="sb-item"><span class="dot"></span>Purchase Orders</a>
+      <a class="sb-item active"><span class="dot"></span>Invoices</a>
+    </div>
+    <div class="sb-section">Insights</div>
+    <div class="sb-nav"><a class="sb-item"><span class="dot"></span>Reports &amp; Analytics</a></div>
+    <div class="sb-foot"><div class="sb-user"><div class="sb-avatar">RS</div><div><div>Riya Shah</div><div class="role">Procurement Officer</div></div></div></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><h1>Invoice — INV-0083</h1><div class="sub">GENERATED FROM PO-0098 · STATUS: ISSUED</div></div>
+      <div class="top-actions">
+        <button class="btn btn-ghost" style="border:1.5px solid var(--ink);">⬇ Download PDF</button>
+        <button class="btn btn-ghost" style="border:1.5px solid var(--ink);">🖨 Print</button>
+        <button class="btn">✉ Send via email</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="document">
+        <div class="doc-stamp">PAYMENT<br>APPROVED</div>
+        <div class="doc-head">
+          <div>
+            <div class="doc-logo"><span class="doc-logo-mark"></span>VendorBridge</div>
+            <div class="addr">Aurelia Textiles Ltd.<br>Plot 14, Industrial Estate,<br>Surat, Gujarat 395002<br>GSTIN 24AAACA1111B1Z8</div>
+          </div>
+          <div class="doc-title">
+            <h2>Invoice</h2>
+            <div class="num">INV-0083</div>
+            <div class="date">Issued 19 Aug 2026 · Due 03 Sep 2026</div>
+          </div>
+        </div>
+
+        <div class="doc-meta">
+          <div class="block">
+            <h5>Billed to (Vendor)</h5>
+            <p><b>Cascade Networks Pvt Ltd</b>ops@cascadenet.in<br>GSTIN 27ABCCN1234F1Z5</p>
+          </div>
+          <div class="block">
+            <h5>Reference</h5>
+            <p><b>PO-0098</b>Approved by Arjun Kapoor, 17 Aug 2026<br>RFQ-0109 · Network hardware refresh</p>
+          </div>
+        </div>
+
+        <table class="items">
+          <thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Amount</th></tr></thead>
+          <tbody>
+            <tr><td>24-port managed switch, PoE+</td><td class="num">6</td><td class="num">₹58,000</td><td class="num">₹3,48,000</td></tr>
+            <tr><td>Cat6A cabling — 305m box</td><td class="num">18</td><td class="num">₹9,200</td><td class="num">₹1,65,600</td></tr>
+            <tr><td>Rack-mount patch panel, 48-port</td><td class="num">4</td><td class="num">₹14,675</td><td class="num">₹58,700</td></tr>
+          </tbody>
+        </table>
+
+        <div class="totals">
+          <table>
+            <tr><td class="label">Subtotal</td><td class="val">₹5,72,300</td></tr>
+            <tr><td class="label">GST (18%)</td><td class="val">₹1,03,014</td></tr>
+            <tr><td class="label">Freight</td><td class="val">₹0</td></tr>
+            <tr class="grand"><td class="label">Total due</td><td class="val">₹9,72,300</td></tr>
+          </table>
+        </div>
+
+        <div class="doc-footer">
+          <span>Generated automatically from PO-0098 · VendorBridge ERP</span>
+          <span>Page 1 of 1</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

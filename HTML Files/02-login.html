@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VendorBridge — Sign in</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --paper:#EDE6D6; --paper-deep:#E4DBC7; --paper-line:#C9C0A8; --ink:#231F16; --ink-soft:#4A4535;
+  --muted:#6b6349; --oxblood:#8A3223; --green:#4B6B4A; --card:#F4EFE3; --radius:2px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',sans-serif; line-height:1.55;
+  min-height:100vh; display:flex;
+  background-image:radial-gradient(circle at 1px 1px, rgba(35,31,22,0.05) 1px, transparent 0); background-size:22px 22px;
+}
+.mono{font-family:'IBM Plex Mono',monospace;}
+h1,h2{font-family:'Fraunces',serif; font-weight:600;}
+a{color:inherit;}
+
+.side{
+  width:44%; min-width:380px; background:var(--ink); color:var(--paper);
+  padding:56px 56px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden;
+}
+.side::after{
+  content:""; position:absolute; inset:0;
+  background-image:linear-gradient(rgba(237,230,214,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(237,230,214,0.05) 1px,transparent 1px);
+  background-size:34px 34px;
+}
+.side > *{position:relative; z-index:1;}
+.logo{display:flex; align-items:center; gap:10px; font-family:'Fraunces'; font-weight:700; font-size:19px;}
+.logo-mark{width:24px;height:24px;border:2px solid #D89A57;border-radius:50%;position:relative;}
+.logo-mark::before{content:"";position:absolute;inset:5px;border:1px solid #D89A57;border-radius:50%;}
+.side-quote{max-width:380px;}
+.side-quote .eyebrow{font-family:'IBM Plex Mono'; font-size:11px; color:#D89A57; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:16px;}
+.side-quote h2{font-size:28px; line-height:1.25; color:var(--paper);}
+.side-ledger{border-top:1px solid rgba(237,230,214,0.2); padding-top:18px; font-family:'IBM Plex Mono'; font-size:12px; color:#B9AF97;}
+.side-ledger .row{display:flex; justify-content:space-between; padding:6px 0;}
+
+.main{flex:1; display:flex; align-items:center; justify-content:center; padding:40px;}
+.form-card{width:100%; max-width:400px;}
+.tabs{display:flex; gap:0; border:1.5px solid var(--ink); margin-bottom:36px;}
+.tab{flex:1; text-align:center; padding:12px; font-family:'IBM Plex Mono'; font-size:13px; letter-spacing:0.04em; cursor:pointer;}
+.tab.active{background:var(--ink); color:var(--paper);}
+.tab:not(.active){color:var(--muted);}
+
+.form-card .eyebrow{font-family:'IBM Plex Mono'; font-size:11px; color:var(--oxblood); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:12px;}
+.form-card h1{font-size:30px; margin-bottom:8px;}
+.form-card p.sub{color:var(--muted); font-size:14px; margin-bottom:32px;}
+
+.field{margin-bottom:20px;}
+.field label{display:block; font-family:'IBM Plex Mono'; font-size:11.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); margin-bottom:8px;}
+.field input, .field select{
+  width:100%; padding:12px 14px; border:1.5px solid var(--paper-line); background:var(--card);
+  font-family:'IBM Plex Sans'; font-size:14px; color:var(--ink); border-radius:var(--radius);
+}
+.field input:focus, .field select:focus{outline:none; border-color:var(--oxblood);}
+.role-select{display:grid; grid-template-columns:repeat(2,1fr); gap:10px;}
+.role-opt{border:1.5px solid var(--paper-line); padding:12px; text-align:center; font-family:'IBM Plex Mono'; font-size:12px; cursor:pointer; color:var(--muted);}
+.role-opt.selected{border-color:var(--oxblood); color:var(--oxblood); background:var(--card);}
+
+.row-between{display:flex; justify-content:space-between; align-items:center; font-size:13px; margin-bottom:26px;}
+.row-between a{color:var(--oxblood); font-family:'IBM Plex Mono'; font-size:12.5px;}
+.check{display:flex; align-items:center; gap:8px; color:var(--muted);}
+.check input{accent-color:var(--oxblood);}
+
+.btn{
+  width:100%; padding:14px; border-radius:var(--radius); border:1.5px solid var(--ink); color:var(--paper);
+  background:var(--ink); font-family:'IBM Plex Mono'; font-weight:500; font-size:13.5px; letter-spacing:0.03em;
+  cursor:pointer; transition:all .18s;
+}
+.btn:hover{background:var(--oxblood); border-color:var(--oxblood);}
+.foot-note{text-align:center; margin-top:22px; font-size:13px; color:var(--muted);}
+.foot-note a{color:var(--oxblood); font-family:'IBM Plex Mono'; font-size:12.5px;}
+
+@media (max-width:860px){ .side{display:none;} .main{width:100%;} }
+</style>
+</head>
+<body>
+
+<div class="side">
+  <div class="logo"><span class="logo-mark"></span>VendorBridge</div>
+  <div class="side-quote">
+    <div class="eyebrow">Procurement Manifest · ERP</div>
+    <h2>Every vendor, quotation and approval — filed against one record.</h2>
+  </div>
+  <div class="side-ledger">
+    <div class="row"><span>Active vendors</span><span>128</span></div>
+    <div class="row"><span>Open RFQs</span><span>12</span></div>
+    <div class="row"><span>Pending approvals</span><span>4</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="form-card">
+    <div class="tabs">
+      <div class="tab active">Sign in</div>
+      <div class="tab">Create account</div>
+    </div>
+    <span class="eyebrow">Welcome back</span>
+    <h1>Sign in to your ledger</h1>
+    <p class="sub">Use your work email — access is scoped to your assigned role.</p>
+
+    <div class="field">
+      <label>Email address</label>
+      <input type="email" placeholder="you@company.com">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" placeholder="••••••••••">
+    </div>
+
+    <div class="row-between">
+      <label class="check"><input type="checkbox"> Keep me signed in</label>
+      <a href="#">Forgot password?</a>
+    </div>
+
+    <button class="btn">Sign in</button>
+    <p class="foot-note">New to VendorBridge? <a href="#">Create an account</a></p>
+  </div>
+</div>
+
+</body>
+</html>

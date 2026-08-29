@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VendorBridge — Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --paper:#EDE6D6; --paper-deep:#E4DBC7; --paper-line:#C9C0A8; --ink:#231F16; --ink-soft:#4A4535;
+  --muted:#6b6349; --oxblood:#8A3223; --green:#4B6B4A; --amber:#9C7A2E; --card:#F4EFE3; --radius:2px;
+  --sidebar:#231F16; --sidebar-line:rgba(237,230,214,0.14); --sidebar-text:#D8CFB8; --sidebar-muted:#8C8368;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',sans-serif; line-height:1.5;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+h1,h2,h3{font-family:'Fraunces',serif; font-weight:600;}
+a{color:inherit; text-decoration:none;}
+
+.app{display:flex; min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{width:238px; background:var(--sidebar); color:var(--sidebar-text); flex-shrink:0; display:flex; flex-direction:column; padding:26px 0;}
+.sb-logo{display:flex; align-items:center; gap:10px; font-family:'Fraunces'; font-weight:700; font-size:17px; padding:0 24px 26px; border-bottom:1px solid var(--sidebar-line);}
+.sb-logo-mark{width:20px;height:20px;border:2px solid #D89A57;border-radius:50%;position:relative;flex-shrink:0;}
+.sb-logo-mark::before{content:"";position:absolute;inset:4px;border:1px solid #D89A57;border-radius:50%;}
+.sb-section{padding:20px 24px 8px; font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--sidebar-muted);}
+.sb-nav{display:flex; flex-direction:column;}
+.sb-item{padding:10px 24px; font-size:13.5px; display:flex; align-items:center; gap:12px; color:var(--sidebar-muted); border-left:2px solid transparent;}
+.sb-item .dot{width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0;}
+.sb-item.active{color:var(--paper); background:rgba(237,230,214,0.06); border-left-color:#D89A57;}
+.sb-item:hover:not(.active){color:var(--sidebar-text);}
+.sb-foot{margin-top:auto; padding:18px 24px; border-top:1px solid var(--sidebar-line); font-size:12.5px;}
+.sb-user{display:flex; align-items:center; gap:10px;}
+.sb-avatar{width:30px; height:30px; border-radius:50%; background:#8A3223; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono'; font-size:12px; flex-shrink:0;}
+.sb-user .role{font-family:'IBM Plex Mono'; font-size:10.5px; color:var(--sidebar-muted); text-transform:uppercase;}
+
+/* MAIN */
+.main{flex:1; display:flex; flex-direction:column; min-width:0;}
+.topbar{
+  display:flex; justify-content:space-between; align-items:center; padding:20px 36px;
+  border-bottom:1.5px solid var(--ink); background:var(--paper);
+}
+.topbar h1{font-size:22px;}
+.topbar .sub{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--muted); margin-top:4px;}
+.top-actions{display:flex; align-items:center; gap:18px;}
+.search{border:1.5px solid var(--paper-line); background:var(--card); padding:9px 14px; font-size:13px; color:var(--muted); width:220px; border-radius:var(--radius); font-family:'IBM Plex Mono';}
+.bell{width:36px; height:36px; border:1.5px solid var(--paper-line); border-radius:50%; display:flex; align-items:center; justify-content:center; position:relative; font-size:15px;}
+.bell::after{content:""; width:6px; height:6px; border-radius:50%; background:var(--oxblood); position:absolute; top:7px; right:8px;}
+.btn{padding:10px 18px; border-radius:var(--radius); border:1.5px solid var(--ink); background:var(--ink); color:var(--paper); font-family:'IBM Plex Mono'; font-size:12.5px; cursor:pointer;}
+.btn:hover{background:var(--oxblood); border-color:var(--oxblood);}
+
+.content{padding:32px 36px 60px;}
+
+/* STAT CARDS */
+.stats{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:36px;}
+.stat-card{border:1.5px solid var(--ink); background:var(--card); padding:20px 22px;}
+.stat-card .k{font-family:'IBM Plex Mono'; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin-bottom:14px;}
+.stat-card .v{font-family:'Fraunces'; font-size:32px; font-weight:600;}
+.stat-card .delta{font-family:'IBM Plex Mono'; font-size:11.5px; margin-top:8px;}
+.delta.up{color:var(--green);}
+.delta.warn{color:var(--oxblood);}
+
+/* TWO COLUMN */
+.grid-2{display:grid; grid-template-columns:1.6fr 1fr; gap:20px; margin-bottom:20px;}
+.panel{border:1.5px solid var(--ink); background:var(--card);}
+.panel-head{display:flex; justify-content:space-between; align-items:center; padding:16px 22px; border-bottom:1.5px solid var(--ink);}
+.panel-head h3{font-size:16px;}
+.panel-head a{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--oxblood);}
+
+.ledger-row{display:grid; grid-template-columns:90px 1fr 120px 90px; align-items:center; padding:13px 22px; border-bottom:1px solid var(--paper-line); font-size:13px;}
+.ledger-row:last-child{border-bottom:none;}
+.ledger-row .code{color:var(--ink-soft);}
+.badge{font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; padding:3px 8px; border-radius:20px; display:inline-block; letter-spacing:0.03em;}
+.badge.approved{background:rgba(75,107,74,0.15); color:var(--green);}
+.badge.pending{background:rgba(138,50,35,0.12); color:var(--oxblood);}
+.badge.issued{background:rgba(35,31,22,0.08); color:var(--ink-soft);}
+
+.approval-row{display:flex; justify-content:space-between; align-items:center; padding:14px 22px; border-bottom:1px solid var(--paper-line); gap:12px;}
+.approval-row:last-child{border-bottom:none;}
+.approval-row .info h4{font-size:13.5px; font-weight:600; margin-bottom:3px;}
+.approval-row .info span{font-family:'IBM Plex Mono'; font-size:11px; color:var(--muted);}
+.mini-actions{display:flex; gap:6px;}
+.mini-btn{width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; border:1.5px solid var(--paper-line); cursor:pointer;}
+.mini-btn.approve{border-color:var(--green); color:var(--green);}
+.mini-btn.reject{border-color:var(--oxblood); color:var(--oxblood);}
+
+/* QUICK ACTIONS */
+.quick-actions{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+.qa{border:1.5px dashed var(--paper-line); padding:20px; text-align:center; font-family:'IBM Plex Mono'; font-size:12.5px; color:var(--ink-soft); cursor:pointer;}
+.qa:hover{border-color:var(--oxblood); color:var(--oxblood);}
+
+@media (max-width:1050px){ .stats{grid-template-columns:repeat(2,1fr);} .grid-2{grid-template-columns:1fr;} .quick-actions{grid-template-columns:repeat(2,1fr);} }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="sb-logo"><span class="sb-logo-mark"></span>VendorBridge</div>
+    <div class="sb-section">Overview</div>
+    <div class="sb-nav">
+      <a class="sb-item active"><span class="dot"></span>Dashboard</a>
+      <a class="sb-item"><span class="dot"></span>Activity &amp; Logs</a>
+    </div>
+    <div class="sb-section">Procurement</div>
+    <div class="sb-nav">
+      <a class="sb-item"><span class="dot"></span>Vendors</a>
+      <a class="sb-item"><span class="dot"></span>RFQs</a>
+      <a class="sb-item"><span class="dot"></span>Quotations</a>
+      <a class="sb-item"><span class="dot"></span>Approvals</a>
+      <a class="sb-item"><span class="dot"></span>Purchase Orders</a>
+      <a class="sb-item"><span class="dot"></span>Invoices</a>
+    </div>
+    <div class="sb-section">Insights</div>
+    <div class="sb-nav">
+      <a class="sb-item"><span class="dot"></span>Reports &amp; Analytics</a>
+    </div>
+    <div class="sb-foot">
+      <div class="sb-user">
+        <div class="sb-avatar">RS</div>
+        <div>
+          <div>Riya Shah</div>
+          <div class="role">Procurement Officer</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1>Dashboard</h1>
+        <div class="sub">THU 20 AUG 2026 · ALL SYSTEMS NORMAL</div>
+      </div>
+      <div class="top-actions">
+        <input class="search mono" placeholder="Search PO, RFQ, vendor…">
+        <div class="bell">🔔</div>
+        <button class="btn">+ New RFQ</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="stats">
+        <div class="stat-card">
+          <div class="k">Pending Approvals</div>
+          <div class="v">4</div>
+          <div class="delta warn">↑ 2 since yesterday</div>
+        </div>
+        <div class="stat-card">
+          <div class="k">Active RFQs</div>
+          <div class="v">12</div>
+          <div class="delta up">↑ 3 this week</div>
+        </div>
+        <div class="stat-card">
+          <div class="k">Purchase Orders (MTD)</div>
+          <div class="v">38</div>
+          <div class="delta up">↑ 12% vs last month</div>
+        </div>
+        <div class="stat-card">
+          <div class="k">Invoiced (MTD)</div>
+          <div class="v mono" style="font-size:26px;">₹41.2L</div>
+          <div class="delta up">↑ 8% vs last month</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head"><h3>Recent purchase orders</h3><a href="#">View all →</a></div>
+          <div class="ledger-row mono" style="color:var(--muted); font-size:11px; text-transform:uppercase;">
+            <span>PO No.</span><span>Vendor</span><span>Amount</span><span>Status</span>
+          </div>
+          <div class="ledger-row">
+            <span class="code mono">PO-0098</span><span>Cascade Networks Pvt Ltd</span><span class="mono">₹9,72,300</span><span class="badge issued">Issued</span>
+          </div>
+          <div class="ledger-row">
+            <span class="code mono">PO-0097</span><span>Solaris Office Supplies</span><span class="mono">₹1,84,000</span><span class="badge approved">Approved</span>
+          </div>
+          <div class="ledger-row">
+            <span class="code mono">PO-0096</span><span>Meridian Packaging Co.</span><span class="mono">₹2,14,500</span><span class="badge pending">Pending</span>
+          </div>
+          <div class="ledger-row">
+            <span class="code mono">PO-0095</span><span>Vantage Hardware</span><span class="mono">₹6,40,000</span><span class="badge issued">Issued</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Pending your approval</h3><a href="#">View all →</a></div>
+          <div class="approval-row">
+            <div class="info"><h4>QT-0271 · Meridian Packaging</h4><span>₹2,14,500 · submitted 2h ago</span></div>
+            <div class="mini-actions"><div class="mini-btn approve">✓</div><div class="mini-btn reject">✕</div></div>
+          </div>
+          <div class="approval-row">
+            <div class="info"><h4>QT-0268 · Solaris Office</h4><span>₹1,84,000 · submitted 5h ago</span></div>
+            <div class="mini-actions"><div class="mini-btn approve">✓</div><div class="mini-btn reject">✕</div></div>
+          </div>
+          <div class="approval-row">
+            <div class="info"><h4>QT-0265 · Vantage Hardware</h4><span>₹6,40,000 · submitted 1d ago</span></div>
+            <div class="mini-actions"><div class="mini-btn approve">✓</div><div class="mini-btn reject">✕</div></div>
+          </div>
+          <div class="approval-row">
+            <div class="info"><h4>QT-0262 · Cascade Networks</h4><span>₹9,72,300 · submitted 1d ago</span></div>
+            <div class="mini-actions"><div class="mini-btn approve">✓</div><div class="mini-btn reject">✕</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:0;">
+        <div class="panel-head"><h3>Quick actions</h3></div>
+        <div style="padding:20px 22px;">
+          <div class="quick-actions">
+            <div class="qa">+ Create RFQ</div>
+            <div class="qa">+ Register vendor</div>
+            <div class="qa">↗ Compare quotations</div>
+            <div class="qa">↗ Generate report</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

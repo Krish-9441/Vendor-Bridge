@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VendorBridge — Create RFQ</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --paper:#EDE6D6; --paper-deep:#E4DBC7; --paper-line:#C9C0A8; --ink:#231F16; --ink-soft:#4A4535;
+  --muted:#6b6349; --oxblood:#8A3223; --green:#4B6B4A; --card:#F4EFE3; --radius:2px;
+  --sidebar:#231F16; --sidebar-line:rgba(237,230,214,0.14); --sidebar-text:#D8CFB8; --sidebar-muted:#8C8368;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',sans-serif; line-height:1.5;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+h1,h2,h3{font-family:'Fraunces',serif; font-weight:600;}
+a{color:inherit; text-decoration:none;}
+.app{display:flex; min-height:100vh;}
+.sidebar{width:238px; background:var(--sidebar); color:var(--sidebar-text); flex-shrink:0; display:flex; flex-direction:column; padding:26px 0;}
+.sb-logo{display:flex; align-items:center; gap:10px; font-family:'Fraunces'; font-weight:700; font-size:17px; padding:0 24px 26px; border-bottom:1px solid var(--sidebar-line);}
+.sb-logo-mark{width:20px;height:20px;border:2px solid #D89A57;border-radius:50%;position:relative;flex-shrink:0;}
+.sb-logo-mark::before{content:"";position:absolute;inset:4px;border:1px solid #D89A57;border-radius:50%;}
+.sb-section{padding:20px 24px 8px; font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--sidebar-muted);}
+.sb-nav{display:flex; flex-direction:column;}
+.sb-item{padding:10px 24px; font-size:13.5px; display:flex; align-items:center; gap:12px; color:var(--sidebar-muted); border-left:2px solid transparent;}
+.sb-item .dot{width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0;}
+.sb-item.active{color:var(--paper); background:rgba(237,230,214,0.06); border-left-color:#D89A57;}
+.sb-foot{margin-top:auto; padding:18px 24px; border-top:1px solid var(--sidebar-line); font-size:12.5px;}
+.sb-user{display:flex; align-items:center; gap:10px;}
+.sb-avatar{width:30px; height:30px; border-radius:50%; background:#8A3223; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono'; font-size:12px; flex-shrink:0;}
+.sb-user .role{font-family:'IBM Plex Mono'; font-size:10.5px; color:var(--sidebar-muted); text-transform:uppercase;}
+.main{flex:1; display:flex; flex-direction:column; min-width:0;}
+.topbar{display:flex; justify-content:space-between; align-items:center; padding:20px 36px; border-bottom:1.5px solid var(--ink);}
+.topbar h1{font-size:22px;}
+.topbar .sub{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--muted); margin-top:4px;}
+.btn{padding:11px 20px; border-radius:var(--radius); border:1.5px solid var(--ink); background:var(--ink); color:var(--paper); font-family:'IBM Plex Mono'; font-size:12.5px; cursor:pointer;}
+.btn:hover{background:var(--oxblood); border-color:var(--oxblood);}
+.btn-ghost{background:transparent; color:var(--ink);}
+.content{padding:30px 36px 70px; max-width:880px;}
+
+.steps{display:flex; gap:0; margin-bottom:32px; font-family:'IBM Plex Mono'; font-size:12px;}
+.step{display:flex; align-items:center; gap:8px; padding-right:24px; color:var(--muted);}
+.step .n{width:20px; height:20px; border-radius:50%; border:1.5px solid var(--paper-line); display:flex; align-items:center; justify-content:center; font-size:10.5px;}
+.step.active{color:var(--oxblood);}
+.step.active .n{border-color:var(--oxblood); background:var(--oxblood); color:var(--paper);}
+.step.done .n{border-color:var(--green); background:var(--green); color:var(--paper);}
+
+.card{border:1.5px solid var(--ink); background:var(--card); margin-bottom:24px;}
+.card-head{padding:16px 24px; border-bottom:1.5px solid var(--ink);}
+.card-head h3{font-size:16.5px;}
+.card-head p{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--muted); margin-top:4px;}
+.card-body{padding:22px 24px;}
+
+.field-row{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px;}
+.field{margin-bottom:18px;}
+.field label{display:block; font-family:'IBM Plex Mono'; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); margin-bottom:8px;}
+.field input, .field select, .field textarea{
+  width:100%; padding:11px 13px; border:1.5px solid var(--paper-line); background:var(--paper);
+  font-family:'IBM Plex Sans'; font-size:13.5px; color:var(--ink); border-radius:var(--radius);
+}
+.field textarea{resize:vertical; min-height:70px;}
+.field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--oxblood);}
+.hint{font-family:'IBM Plex Mono'; font-size:10.5px; color:var(--muted); margin-top:6px;}
+
+.line-items{border:1.5px solid var(--paper-line);}
+.li-head{display:grid; grid-template-columns:1.6fr 90px 110px 40px; padding:10px 16px; font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--paper-line); background:var(--paper-deep);}
+.li-row{display:grid; grid-template-columns:1.6fr 90px 110px 40px; padding:10px 16px; align-items:center; border-bottom:1px solid var(--paper-line); gap:8px;}
+.li-row:last-child{border-bottom:none;}
+.li-row input{width:100%; padding:8px 10px; border:1px solid var(--paper-line); background:var(--paper); font-size:13px; border-radius:2px;}
+.li-remove{color:var(--oxblood); cursor:pointer; text-align:center; font-family:'IBM Plex Mono'; font-size:13px;}
+.add-line{padding:10px 16px; font-family:'IBM Plex Mono'; font-size:12px; color:var(--oxblood); cursor:pointer;}
+
+.dropzone{border:1.5px dashed var(--paper-line); padding:26px; text-align:center; font-family:'IBM Plex Mono'; font-size:12.5px; color:var(--muted);}
+
+.vendor-picker{display:flex; flex-wrap:wrap; gap:10px;}
+.vendor-chip{border:1.5px solid var(--paper-line); padding:9px 14px; font-size:12.5px; border-radius:20px; display:flex; align-items:center; gap:8px;}
+.vendor-chip.selected{border-color:var(--oxblood); background:var(--paper);}
+.vendor-chip .x{color:var(--oxblood); font-family:'IBM Plex Mono';}
+
+.form-actions{display:flex; justify-content:flex-end; gap:12px; padding-top:8px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-logo"><span class="sb-logo-mark"></span>VendorBridge</div>
+    <div class="sb-section">Overview</div>
+    <div class="sb-nav"><a class="sb-item"><span class="dot"></span>Dashboard</a><a class="sb-item"><span class="dot"></span>Activity &amp; Logs</a></div>
+    <div class="sb-section">Procurement</div>
+    <div class="sb-nav">
+      <a class="sb-item"><span class="dot"></span>Vendors</a>
+      <a class="sb-item active"><span class="dot"></span>RFQs</a>
+      <a class="sb-item"><span class="dot"></span>Quotations</a>
+      <a class="sb-item"><span class="dot"></span>Approvals</a>
+      <a class="sb-item"><span class="dot"></span>Purchase Orders</a>
+      <a class="sb-item"><span class="dot"></span>Invoices</a>
+    </div>
+    <div class="sb-section">Insights</div>
+    <div class="sb-nav"><a class="sb-item"><span class="dot"></span>Reports &amp; Analytics</a></div>
+    <div class="sb-foot"><div class="sb-user"><div class="sb-avatar">RS</div><div><div>Riya Shah</div><div class="role">Procurement Officer</div></div></div></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><h1>Create RFQ</h1><div class="sub">RFQ-0115 · DRAFT</div></div>
+      <div style="display:flex; gap:10px;"><button class="btn btn-ghost" style="border:1.5px solid var(--ink);">Save draft</button><button class="btn">Send to vendors →</button></div>
+    </div>
+
+    <div class="content">
+      <div class="steps">
+        <div class="step done"><span class="n">✓</span>Details</div>
+        <div class="step active"><span class="n">2</span>Line items</div>
+        <div class="step"><span class="n">3</span>Vendors</div>
+        <div class="step"><span class="n">4</span>Review</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>RFQ details</h3><p>Basic information vendors will see on the request</p></div>
+        <div class="card-body">
+          <div class="field"><label>RFQ Title</label><input type="text" value="Industrial packaging supply — Q3 2026"></div>
+          <div class="field-row">
+            <div class="field"><label>Category</label><select><option>Packaging</option><option>Office Supplies</option><option>IT Hardware</option></select></div>
+            <div class="field"><label>Submission deadline</label><input type="date" value="2026-09-05"></div>
+          </div>
+          <div class="field"><label>Description / scope</label><textarea>Corrugated packaging boxes and protective inserts for Q3 dispatch volume. Delivery required across two warehouse locations.</textarea></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Product / service line items</h3><p>Quantity and specification per item</p></div>
+        <div class="card-body">
+          <div class="line-items">
+            <div class="li-head"><span>Item</span><span>Qty</span><span>Unit</span><span></span></div>
+            <div class="li-row"><input value="Corrugated box — Type A (18x12x10 in)"><input value="8,000"><input value="pcs"><span class="li-remove">✕</span></div>
+            <div class="li-row"><input value="Protective foam insert — standard"><input value="8,000"><input value="pcs"><span class="li-remove">✕</span></div>
+            <div class="li-row"><input value="Pallet wrap film — 25 micron"><input value="120"><input value="rolls"><span class="li-remove">✕</span></div>
+          </div>
+          <div class="add-line">+ Add line item</div>
+          <div style="margin-top:18px;">
+            <label style="display:block; font-family:'IBM Plex Mono'; font-size:11px; text-transform:uppercase; color:var(--ink-soft); margin-bottom:8px;">Attachments</label>
+            <div class="dropzone">Drop spec sheets or drawings here, or click to browse — PDF, XLSX, DWG up to 20MB</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Vendor assignment</h3><p>Select which vendors receive this RFQ</p></div>
+        <div class="card-body">
+          <div class="vendor-picker">
+            <div class="vendor-chip selected">Meridian Packaging Co. <span class="x">✕</span></div>
+            <div class="vendor-chip selected">Solaris Office Supplies <span class="x">✕</span></div>
+            <div class="vendor-chip selected">Vantage Hardware <span class="x">✕</span></div>
+            <div class="vendor-chip" style="color:var(--oxblood);">+ Add vendor</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-ghost" style="border:1.5px solid var(--ink);">Back</button>
+        <button class="btn">Continue to review →</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

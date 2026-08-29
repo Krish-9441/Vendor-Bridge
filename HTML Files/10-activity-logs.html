@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VendorBridge — Activity & Notifications</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --paper:#EDE6D6; --paper-deep:#E4DBC7; --paper-line:#C9C0A8; --ink:#231F16; --ink-soft:#4A4535;
+  --muted:#6b6349; --oxblood:#8A3223; --green:#4B6B4A; --amber:#9C7A2E; --card:#F4EFE3; --radius:2px;
+  --sidebar:#231F16; --sidebar-line:rgba(237,230,214,0.14); --sidebar-text:#D8CFB8; --sidebar-muted:#8C8368;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',sans-serif; line-height:1.5;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+h1,h2,h3{font-family:'Fraunces',serif; font-weight:600;}
+a{color:inherit; text-decoration:none;}
+.app{display:flex; min-height:100vh;}
+.sidebar{width:238px; background:var(--sidebar); color:var(--sidebar-text); flex-shrink:0; display:flex; flex-direction:column; padding:26px 0;}
+.sb-logo{display:flex; align-items:center; gap:10px; font-family:'Fraunces'; font-weight:700; font-size:17px; padding:0 24px 26px; border-bottom:1px solid var(--sidebar-line);}
+.sb-logo-mark{width:20px;height:20px;border:2px solid #D89A57;border-radius:50%;position:relative;flex-shrink:0;}
+.sb-logo-mark::before{content:"";position:absolute;inset:4px;border:1px solid #D89A57;border-radius:50%;}
+.sb-section{padding:20px 24px 8px; font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--sidebar-muted);}
+.sb-nav{display:flex; flex-direction:column;}
+.sb-item{padding:10px 24px; font-size:13.5px; display:flex; align-items:center; gap:12px; color:var(--sidebar-muted); border-left:2px solid transparent;}
+.sb-item .dot{width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0;}
+.sb-item.active{color:var(--paper); background:rgba(237,230,214,0.06); border-left-color:#D89A57;}
+.sb-foot{margin-top:auto; padding:18px 24px; border-top:1px solid var(--sidebar-line); font-size:12.5px;}
+.sb-user{display:flex; align-items:center; gap:10px;}
+.sb-avatar{width:30px; height:30px; border-radius:50%; background:#8A3223; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono'; font-size:12px; flex-shrink:0;}
+.sb-user .role{font-family:'IBM Plex Mono'; font-size:10.5px; color:var(--sidebar-muted); text-transform:uppercase;}
+.main{flex:1; display:flex; flex-direction:column; min-width:0;}
+.topbar{display:flex; justify-content:space-between; align-items:center; padding:20px 36px; border-bottom:1.5px solid var(--ink);}
+.topbar h1{font-size:22px;}
+.topbar .sub{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--muted); margin-top:4px;}
+.content{padding:30px 36px 70px; display:grid; grid-template-columns:1fr 320px; gap:24px; align-items:start;}
+
+.filters{display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;}
+.chip{border:1.5px solid var(--paper-line); padding:8px 14px; font-family:'IBM Plex Mono'; font-size:12px; color:var(--muted); border-radius:20px; cursor:pointer;}
+.chip.active{border-color:var(--oxblood); color:var(--oxblood); background:var(--card);}
+
+.log-list{border:1.5px solid var(--ink); background:var(--card);}
+.log-row{display:grid; grid-template-columns:76px 1fr 130px; gap:14px; padding:16px 22px; border-bottom:1px solid var(--paper-line); align-items:center;}
+.log-row:last-child{border-bottom:none;}
+.log-time{font-family:'IBM Plex Mono'; font-size:11px; color:var(--muted);}
+.log-icon{width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;}
+.log-icon.approve{background:rgba(75,107,74,0.15); color:var(--green);}
+.log-icon.reject{background:rgba(138,50,35,0.12); color:var(--oxblood);}
+.log-icon.create{background:rgba(35,31,22,0.08); color:var(--ink-soft);}
+.log-icon.send{background:rgba(156,122,46,0.15); color:var(--amber);}
+.log-main{display:flex; gap:12px; align-items:flex-start;}
+.log-text h4{font-size:13.5px; font-weight:600; margin-bottom:2px;}
+.log-text p{font-size:12.5px; color:var(--muted);}
+.log-ref{font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink-soft); text-align:right;}
+
+/* Notifications sidebar panel */
+.panel{border:1.5px solid var(--ink); background:var(--card); margin-bottom:20px;}
+.panel-head{padding:14px 20px; border-bottom:1.5px solid var(--ink); display:flex; justify-content:space-between; align-items:center;}
+.panel-head h3{font-size:15px;}
+.panel-head span{font-family:'IBM Plex Mono'; font-size:11px; color:var(--oxblood);}
+.notif{padding:14px 20px; border-bottom:1px solid var(--paper-line); font-size:12.5px;}
+.notif:last-child{border-bottom:none;}
+.notif .tag{font-family:'IBM Plex Mono'; font-size:10px; text-transform:uppercase; color:var(--oxblood); margin-bottom:4px; display:block;}
+.notif p{color:var(--ink-soft); line-height:1.5;}
+.notif .time{font-family:'IBM Plex Mono'; font-size:10.5px; color:var(--muted); margin-top:5px; display:block;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-logo"><span class="sb-logo-mark"></span>VendorBridge</div>
+    <div class="sb-section">Overview</div>
+    <div class="sb-nav"><a class="sb-item"><span class="dot"></span>Dashboard</a><a class="sb-item active"><span class="dot"></span>Activity &amp; Logs</a></div>
+    <div class="sb-section">Procurement</div>
+    <div class="sb-nav">
+      <a class="sb-item"><span class="dot"></span>Vendors</a>
+      <a class="sb-item"><span class="dot"></span>RFQs</a>
+      <a class="sb-item"><span class="dot"></span>Quotations</a>
+      <a class="sb-item"><span class="dot"></span>Approvals</a>
+      <a class="sb-item"><span class="dot"></span>Purchase Orders</a>
+      <a class="sb-item"><span class="dot"></span>Invoices</a>
+    </div>
+    <div class="sb-section">Insights</div>
+    <div class="sb-nav"><a class="sb-item"><span class="dot"></span>Reports &amp; Analytics</a></div>
+    <div class="sb-foot"><div class="sb-user"><div class="sb-avatar">RS</div><div><div>Riya Shah</div><div class="role">Procurement Officer</div></div></div></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><h1>Activity &amp; Notifications</h1><div class="sub">FULL AUDIT TRAIL · LAST 30 DAYS</div></div>
+    </div>
+
+    <div class="content">
+      <div>
+        <div class="filters">
+          <div class="chip active">All activity</div>
+          <div class="chip">RFQs</div>
+          <div class="chip">Approvals</div>
+          <div class="chip">Invoices</div>
+          <div class="chip">Vendors</div>
+        </div>
+
+        <div class="log-list">
+          <div class="log-row">
+            <span class="log-time mono">10:42 AM</span>
+            <div class="log-main"><div class="log-icon send">✉</div><div class="log-text"><h4>Invoice emailed to vendor</h4><p>INV-0083 sent to Cascade Networks Pvt Ltd</p></div></div>
+            <span class="log-ref">by Riya Shah</span>
+          </div>
+          <div class="log-row">
+            <span class="log-time mono">09:15 AM</span>
+            <div class="log-main"><div class="log-icon create">＋</div><div class="log-text"><h4>Purchase order generated</h4><p>PO-0098 created from approved QT-0262</p></div></div>
+            <span class="log-ref">System</span>
+          </div>
+          <div class="log-row">
+            <span class="log-time mono">Yesterday, 4:20 PM</span>
+            <div class="log-main"><div class="log-icon approve">✓</div><div class="log-text"><h4>Quotation approved</h4><p>QT-0262 · Cascade Networks — ₹9,72,300</p></div></div>
+            <span class="log-ref">by Arjun Kapoor</span>
+          </div>
+          <div class="log-row">
+            <span class="log-time mono">Yesterday, 2:03 PM</span>
+            <div class="log-main"><div class="log-icon reject">✕</div><div class="log-text"><h4>Quotation rejected</h4><p>QT-0259 · price above budget ceiling</p></div></div>
+            <span class="log-ref">by Arjun Kapoor</span>
+          </div>
+          <div class="log-row">
+            <span class="log-time mono">Yesterday, 11:15 AM</span>
+            <div class="log-main"><div class="log-icon create">＋</div><div class="log-text"><h4>Vendor selected after comparison</h4><p>Meridian Packaging Co. chosen for RFQ-0114</p></div></div>
+            <span class="log-ref">by Riya Shah</span>
+          </div>
+          <div class="log-row">
+            <span class="log-time mono">18 Aug, 3:42 PM</span>
+            <div class="log-main"><div class="log-icon create">＋</div><div class="log-text"><h4>Quotation submitted</h4><p>QT-0271 · Meridian Packaging — ₹3,24,400</p></div></div>
+            <span class="log-ref">by Meridian Packaging</span>
+          </div>
+          <div class="log-row">
+            <span class="log-time mono">12 Aug, 10:04 AM</span>
+            <div class="log-main"><div class="log-icon create">＋</div><div class="log-text"><h4>RFQ created</h4><p>RFQ-0114 · Industrial packaging supply — Q3</p></div></div>
+            <span class="log-ref">by Riya Shah</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="panel-head"><h3>Notifications</h3><span>3 new</span></div>
+          <div class="notif">
+            <span class="tag">Approval alert</span>
+            <p>QT-0271 from Meridian Packaging is awaiting your sign-off.</p>
+            <span class="time">10 min ago</span>
+          </div>
+          <div class="notif">
+            <span class="tag">Invoice update</span>
+            <p>INV-0083 was successfully delivered to Cascade Networks.</p>
+            <span class="time">2 hours ago</span>
+          </div>
+          <div class="notif">
+            <span class="tag">RFQ notification</span>
+            <p>BoxCraft Solutions submitted a quotation for RFQ-0114.</p>
+            <span class="time">Yesterday</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Export</h3></div>
+          <div style="padding:16px 20px; font-size:12.5px; color:var(--muted);">
+            Download the full audit log as CSV or PDF for compliance review.
+            <div style="margin-top:12px; display:flex; gap:8px;">
+              <button style="flex:1; padding:9px; border:1.5px solid var(--ink); background:transparent; font-family:'IBM Plex Mono'; font-size:11.5px; cursor:pointer;">CSV</button>
+              <button style="flex:1; padding:9px; border:1.5px solid var(--ink); background:transparent; font-family:'IBM Plex Mono'; font-size:11.5px; cursor:pointer;">PDF</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VendorBridge — Compare Quotations</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --paper:#EDE6D6; --paper-deep:#E4DBC7; --paper-line:#C9C0A8; --ink:#231F16; --ink-soft:#4A4535;
+  --muted:#6b6349; --oxblood:#8A3223; --green:#4B6B4A; --card:#F4EFE3; --radius:2px;
+  --sidebar:#231F16; --sidebar-line:rgba(237,230,214,0.14); --sidebar-text:#D8CFB8; --sidebar-muted:#8C8368;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',sans-serif; line-height:1.5;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+h1,h2,h3{font-family:'Fraunces',serif; font-weight:600;}
+a{color:inherit; text-decoration:none;}
+.app{display:flex; min-height:100vh;}
+.sidebar{width:238px; background:var(--sidebar); color:var(--sidebar-text); flex-shrink:0; display:flex; flex-direction:column; padding:26px 0;}
+.sb-logo{display:flex; align-items:center; gap:10px; font-family:'Fraunces'; font-weight:700; font-size:17px; padding:0 24px 26px; border-bottom:1px solid var(--sidebar-line);}
+.sb-logo-mark{width:20px;height:20px;border:2px solid #D89A57;border-radius:50%;position:relative;flex-shrink:0;}
+.sb-logo-mark::before{content:"";position:absolute;inset:4px;border:1px solid #D89A57;border-radius:50%;}
+.sb-section{padding:20px 24px 8px; font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--sidebar-muted);}
+.sb-nav{display:flex; flex-direction:column;}
+.sb-item{padding:10px 24px; font-size:13.5px; display:flex; align-items:center; gap:12px; color:var(--sidebar-muted); border-left:2px solid transparent;}
+.sb-item .dot{width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0;}
+.sb-item.active{color:var(--paper); background:rgba(237,230,214,0.06); border-left-color:#D89A57;}
+.sb-foot{margin-top:auto; padding:18px 24px; border-top:1px solid var(--sidebar-line); font-size:12.5px;}
+.sb-user{display:flex; align-items:center; gap:10px;}
+.sb-avatar{width:30px; height:30px; border-radius:50%; background:#8A3223; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono'; font-size:12px; flex-shrink:0;}
+.sb-user .role{font-family:'IBM Plex Mono'; font-size:10.5px; color:var(--sidebar-muted); text-transform:uppercase;}
+.main{flex:1; display:flex; flex-direction:column; min-width:0;}
+.topbar{display:flex; justify-content:space-between; align-items:center; padding:20px 36px; border-bottom:1.5px solid var(--ink);}
+.topbar h1{font-size:22px;}
+.topbar .sub{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--muted); margin-top:4px;}
+.btn{padding:11px 20px; border-radius:var(--radius); border:1.5px solid var(--ink); background:var(--ink); color:var(--paper); font-family:'IBM Plex Mono'; font-size:12.5px; cursor:pointer;}
+.btn:hover{background:var(--oxblood); border-color:var(--oxblood);}
+.content{padding:30px 36px 70px;}
+
+.toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; flex-wrap:wrap; gap:14px;}
+.sort{display:flex; gap:10px; font-family:'IBM Plex Mono'; font-size:12px;}
+.chip{border:1.5px solid var(--paper-line); padding:8px 14px; color:var(--muted); border-radius:20px; cursor:pointer;}
+.chip.active{border-color:var(--oxblood); color:var(--oxblood); background:var(--card);}
+
+.compare-table{width:100%; border-collapse:collapse; border:1.5px solid var(--ink); background:var(--card);}
+.compare-table th, .compare-table td{padding:16px 20px; border-bottom:1px solid var(--paper-line); vertical-align:top;}
+.compare-table thead th{border-bottom:1.5px solid var(--ink); background:var(--paper-deep); text-align:left;}
+.row-label{font-family:'IBM Plex Mono'; font-size:11px; text-transform:uppercase; color:var(--muted); width:170px;}
+.vendor-col{width:auto;}
+.vendor-col h4{font-size:15.5px; margin-bottom:4px;}
+.vendor-col .stars{color:#C68A2E; font-size:11.5px;}
+.vendor-col.best{background:rgba(75,107,74,0.07);}
+.best-tag{display:inline-block; font-family:'IBM Plex Mono'; font-size:10px; color:var(--green); border:1px solid var(--green); padding:2px 8px; border-radius:20px; margin-top:6px;}
+.price-val{font-family:'IBM Plex Mono'; font-size:17px;}
+.price-val.lowest{color:var(--green); font-weight:600;}
+.delivery-val{font-family:'IBM Plex Mono'; font-size:13px;}
+.delivery-val.fastest{color:var(--green); font-weight:600;}
+.note-val{font-size:12.5px; color:var(--muted); max-width:220px;}
+.select-btn{padding:9px 16px; border:1.5px solid var(--ink); font-family:'IBM Plex Mono'; font-size:11.5px; cursor:pointer; background:transparent;}
+.select-btn.chosen{background:var(--green); border-color:var(--green); color:#fff;}
+tbody tr:last-child td{border-bottom:none;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-logo"><span class="sb-logo-mark"></span>VendorBridge</div>
+    <div class="sb-section">Overview</div>
+    <div class="sb-nav"><a class="sb-item"><span class="dot"></span>Dashboard</a><a class="sb-item"><span class="dot"></span>Activity &amp; Logs</a></div>
+    <div class="sb-section">Procurement</div>
+    <div class="sb-nav">
+      <a class="sb-item"><span class="dot"></span>Vendors</a>
+      <a class="sb-item"><span class="dot"></span>RFQs</a>
+      <a class="sb-item active"><span class="dot"></span>Quotations</a>
+      <a class="sb-item"><span class="dot"></span>Approvals</a>
+      <a class="sb-item"><span class="dot"></span>Purchase Orders</a>
+      <a class="sb-item"><span class="dot"></span>Invoices</a>
+    </div>
+    <div class="sb-section">Insights</div>
+    <div class="sb-nav"><a class="sb-item"><span class="dot"></span>Reports &amp; Analytics</a></div>
+    <div class="sb-foot"><div class="sb-user"><div class="sb-avatar">RS</div><div><div>Riya Shah</div><div class="role">Procurement Officer</div></div></div></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><h1>Compare Quotations</h1><div class="sub">RFQ-0114 · INDUSTRIAL PACKAGING SUPPLY — Q3 2026</div></div>
+      <button class="btn">Send for approval →</button>
+    </div>
+
+    <div class="content">
+      <div class="toolbar">
+        <div class="sort">
+          <div class="chip active">Sort: Lowest price</div>
+          <div class="chip">Fastest delivery</div>
+          <div class="chip">Highest rated</div>
+        </div>
+        <span class="mono" style="font-size:12px; color:var(--muted);">3 quotations received</span>
+      </div>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th class="row-label"></th>
+            <th class="vendor-col best">
+              <h4>Meridian Packaging Co.</h4>
+              <span class="stars">★★★☆☆</span>
+              <div class="best-tag">Lowest price</div>
+            </th>
+            <th class="vendor-col">
+              <h4>PackRight Industries</h4>
+              <span class="stars">★★★★☆</span>
+            </th>
+            <th class="vendor-col">
+              <h4>BoxCraft Solutions</h4>
+              <span class="stars">★★★★★</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="row-label">Total price</td>
+            <td class="vendor-col best"><span class="price-val lowest">₹3,24,400</span></td>
+            <td class="vendor-col"><span class="price-val">₹3,41,000</span></td>
+            <td class="vendor-col"><span class="price-val">₹3,58,900</span></td>
+          </tr>
+          <tr>
+            <td class="row-label">Delivery timeline</td>
+            <td class="vendor-col best"><span class="delivery-val">14 business days</span></td>
+            <td class="vendor-col"><span class="delivery-val fastest">9 business days</span></td>
+            <td class="vendor-col"><span class="delivery-val">12 business days</span></td>
+          </tr>
+          <tr>
+            <td class="row-label">Valid until</td>
+            <td class="vendor-col best"><span class="mono">20 Sep 2026</span></td>
+            <td class="vendor-col"><span class="mono">15 Sep 2026</span></td>
+            <td class="vendor-col"><span class="mono">25 Sep 2026</span></td>
+          </tr>
+          <tr>
+            <td class="row-label">Notes</td>
+            <td class="vendor-col best"><span class="note-val">Freight included to both warehouses; partial shipment available.</span></td>
+            <td class="vendor-col"><span class="note-val">Freight billed separately; single delivery point only.</span></td>
+            <td class="vendor-col"><span class="note-val">Freight included; requires 30% advance payment.</span></td>
+          </tr>
+          <tr>
+            <td class="row-label">Decision</td>
+            <td class="vendor-col best"><button class="select-btn chosen">✓ Selected</button></td>
+            <td class="vendor-col"><button class="select-btn">Select</button></td>
+            <td class="vendor-col"><button class="select-btn">Select</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VendorBridge — Vendor Management</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --paper:#EDE6D6; --paper-deep:#E4DBC7; --paper-line:#C9C0A8; --ink:#231F16; --ink-soft:#4A4535;
+  --muted:#6b6349; --oxblood:#8A3223; --green:#4B6B4A; --amber:#9C7A2E; --card:#F4EFE3; --radius:2px;
+  --sidebar:#231F16; --sidebar-line:rgba(237,230,214,0.14); --sidebar-text:#D8CFB8; --sidebar-muted:#8C8368;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',sans-serif; line-height:1.5;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+h1,h2,h3{font-family:'Fraunces',serif; font-weight:600;}
+a{color:inherit; text-decoration:none;}
+.app{display:flex; min-height:100vh;}
+.sidebar{width:238px; background:var(--sidebar); color:var(--sidebar-text); flex-shrink:0; display:flex; flex-direction:column; padding:26px 0;}
+.sb-logo{display:flex; align-items:center; gap:10px; font-family:'Fraunces'; font-weight:700; font-size:17px; padding:0 24px 26px; border-bottom:1px solid var(--sidebar-line);}
+.sb-logo-mark{width:20px;height:20px;border:2px solid #D89A57;border-radius:50%;position:relative;flex-shrink:0;}
+.sb-logo-mark::before{content:"";position:absolute;inset:4px;border:1px solid #D89A57;border-radius:50%;}
+.sb-section{padding:20px 24px 8px; font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--sidebar-muted);}
+.sb-nav{display:flex; flex-direction:column;}
+.sb-item{padding:10px 24px; font-size:13.5px; display:flex; align-items:center; gap:12px; color:var(--sidebar-muted); border-left:2px solid transparent;}
+.sb-item .dot{width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0;}
+.sb-item.active{color:var(--paper); background:rgba(237,230,214,0.06); border-left-color:#D89A57;}
+.sb-foot{margin-top:auto; padding:18px 24px; border-top:1px solid var(--sidebar-line); font-size:12.5px;}
+.sb-user{display:flex; align-items:center; gap:10px;}
+.sb-avatar{width:30px; height:30px; border-radius:50%; background:#8A3223; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono'; font-size:12px; flex-shrink:0;}
+.sb-user .role{font-family:'IBM Plex Mono'; font-size:10.5px; color:var(--sidebar-muted); text-transform:uppercase;}
+.main{flex:1; display:flex; flex-direction:column; min-width:0;}
+.topbar{display:flex; justify-content:space-between; align-items:center; padding:20px 36px; border-bottom:1.5px solid var(--ink);}
+.topbar h1{font-size:22px;}
+.topbar .sub{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--muted); margin-top:4px;}
+.btn{padding:10px 18px; border-radius:var(--radius); border:1.5px solid var(--ink); background:var(--ink); color:var(--paper); font-family:'IBM Plex Mono'; font-size:12.5px; cursor:pointer;}
+.btn:hover{background:var(--oxblood); border-color:var(--oxblood);}
+.content{padding:28px 36px 60px;}
+
+.toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:16px; flex-wrap:wrap;}
+.filters{display:flex; gap:10px; flex-wrap:wrap;}
+.chip{border:1.5px solid var(--paper-line); padding:8px 14px; font-family:'IBM Plex Mono'; font-size:12px; color:var(--muted); border-radius:20px; cursor:pointer;}
+.chip.active{border-color:var(--oxblood); color:var(--oxblood); background:var(--card);}
+.search{border:1.5px solid var(--paper-line); background:var(--card); padding:9px 14px; font-size:13px; width:240px; border-radius:var(--radius); font-family:'IBM Plex Mono';}
+
+table{width:100%; border-collapse:collapse; border:1.5px solid var(--ink); background:var(--card);}
+thead th{
+  text-align:left; padding:13px 18px; font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase;
+  letter-spacing:0.05em; color:var(--muted); border-bottom:1.5px solid var(--ink); background:var(--paper-deep);
+}
+tbody td{padding:15px 18px; border-bottom:1px solid var(--paper-line); font-size:13.5px; vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:var(--paper-deep);}
+.vendor-name{font-weight:600;}
+.vendor-name .gst{display:block; font-family:'IBM Plex Mono'; font-size:11px; color:var(--muted); font-weight:400; margin-top:3px;}
+.badge{font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; padding:3px 9px; border-radius:20px; display:inline-block;}
+.badge.active{background:rgba(75,107,74,0.15); color:var(--green);}
+.badge.review{background:rgba(156,122,46,0.16); color:var(--amber);}
+.badge.inactive{background:rgba(35,31,22,0.08); color:var(--muted);}
+.cat-tag{font-family:'IBM Plex Mono'; font-size:11px; border:1px solid var(--paper-line); padding:3px 8px; border-radius:2px; color:var(--ink-soft);}
+.stars{color:#C68A2E; font-size:12px; letter-spacing:1px;}
+.row-actions{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--oxblood);}
+
+.pagination{display:flex; justify-content:space-between; align-items:center; margin-top:16px; font-family:'IBM Plex Mono'; font-size:12px; color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-logo"><span class="sb-logo-mark"></span>VendorBridge</div>
+    <div class="sb-section">Overview</div>
+    <div class="sb-nav">
+      <a class="sb-item"><span class="dot"></span>Dashboard</a>
+      <a class="sb-item"><span class="dot"></span>Activity &amp; Logs</a>
+    </div>
+    <div class="sb-section">Procurement</div>
+    <div class="sb-nav">
+      <a class="sb-item active"><span class="dot"></span>Vendors</a>
+      <a class="sb-item"><span class="dot"></span>RFQs</a>
+      <a class="sb-item"><span class="dot"></span>Quotations</a>
+      <a class="sb-item"><span class="dot"></span>Approvals</a>
+      <a class="sb-item"><span class="dot"></span>Purchase Orders</a>
+      <a class="sb-item"><span class="dot"></span>Invoices</a>
+    </div>
+    <div class="sb-section">Insights</div>
+    <div class="sb-nav"><a class="sb-item"><span class="dot"></span>Reports &amp; Analytics</a></div>
+    <div class="sb-foot">
+      <div class="sb-user"><div class="sb-avatar">RS</div><div><div>Riya Shah</div><div class="role">Procurement Officer</div></div></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><h1>Vendor Management</h1><div class="sub">128 REGISTERED · 112 ACTIVE</div></div>
+      <button class="btn">+ Register vendor</button>
+    </div>
+    <div class="content">
+      <div class="toolbar">
+        <div class="filters">
+          <div class="chip active">All (128)</div>
+          <div class="chip">Active (112)</div>
+          <div class="chip">Under review (9)</div>
+          <div class="chip">Inactive (7)</div>
+        </div>
+        <input class="search mono" placeholder="Search by name, GST, category…">
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>Vendor</th><th>Category</th><th>GST No.</th><th>Contact</th><th>Rating</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="vendor-name">Cascade Networks Pvt Ltd<span class="gst">GSTIN 27ABCCN1234F1Z5</span></div></td>
+            <td><span class="cat-tag">IT Hardware</span></td>
+            <td class="mono">27ABCCN1234F1Z5</td>
+            <td>ops@cascadenet.in</td>
+            <td><span class="stars">★★★★☆</span></td>
+            <td><span class="badge active">Active</span></td>
+            <td class="row-actions">View →</td>
+          </tr>
+          <tr>
+            <td><div class="vendor-name">Solaris Office Supplies<span class="gst">GSTIN 24AAFCS5678K1Z2</span></div></td>
+            <td><span class="cat-tag">Office Supplies</span></td>
+            <td class="mono">24AAFCS5678K1Z2</td>
+            <td>sales@solarisoffice.com</td>
+            <td><span class="stars">★★★★★</span></td>
+            <td><span class="badge active">Active</span></td>
+            <td class="row-actions">View →</td>
+          </tr>
+          <tr>
+            <td><div class="vendor-name">Meridian Packaging Co.<span class="gst">GSTIN 19AACFM9081L1ZA</span></div></td>
+            <td><span class="cat-tag">Packaging</span></td>
+            <td class="mono">19AACFM9081L1ZA</td>
+            <td>contact@meridianpack.in</td>
+            <td><span class="stars">★★★☆☆</span></td>
+            <td><span class="badge review">Under review</span></td>
+            <td class="row-actions">View →</td>
+          </tr>
+          <tr>
+            <td><div class="vendor-name">Vantage Hardware<span class="gst">GSTIN 06AAECV4432R1Z9</span></div></td>
+            <td><span class="cat-tag">Industrial Hardware</span></td>
+            <td class="mono">06AAECV4432R1Z9</td>
+            <td>procurement@vantagehw.com</td>
+            <td><span class="stars">★★★★☆</span></td>
+            <td><span class="badge active">Active</span></td>
+            <td class="row-actions">View →</td>
+          </tr>
+          <tr>
+            <td><div class="vendor-name">Ironclad Logistics<span class="gst">GSTIN 09AAJCI2210P1Z6</span></div></td>
+            <td><span class="cat-tag">Logistics</span></td>
+            <td class="mono">09AAJCI2210P1Z6</td>
+            <td>fleet@ironcladlog.in</td>
+            <td><span class="stars">★★☆☆☆</span></td>
+            <td><span class="badge inactive">Inactive</span></td>
+            <td class="row-actions">View →</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="pagination">
+        <span>Showing 1–5 of 128 vendors</span>
+        <span>← Prev &nbsp; 1 &nbsp; 2 &nbsp; 3 &nbsp; … &nbsp; 26 &nbsp; Next →</span>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VendorBridge — Submit Quotation</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --paper:#EDE6D6; --paper-deep:#E4DBC7; --paper-line:#C9C0A8; --ink:#231F16; --ink-soft:#4A4535;
+  --muted:#6b6349; --oxblood:#8A3223; --green:#4B6B4A; --card:#F4EFE3; --radius:2px;
+  --sidebar:#231F16; --sidebar-line:rgba(237,230,214,0.14); --sidebar-text:#D8CFB8; --sidebar-muted:#8C8368;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',sans-serif; line-height:1.5;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+h1,h2,h3{font-family:'Fraunces',serif; font-weight:600;}
+a{color:inherit; text-decoration:none;}
+.app{display:flex; min-height:100vh;}
+.sidebar{width:238px; background:var(--sidebar); color:var(--sidebar-text); flex-shrink:0; display:flex; flex-direction:column; padding:26px 0;}
+.sb-logo{display:flex; align-items:center; gap:10px; font-family:'Fraunces'; font-weight:700; font-size:17px; padding:0 24px 26px; border-bottom:1px solid var(--sidebar-line);}
+.sb-logo-mark{width:20px;height:20px;border:2px solid #D89A57;border-radius:50%;position:relative;flex-shrink:0;}
+.sb-logo-mark::before{content:"";position:absolute;inset:4px;border:1px solid #D89A57;border-radius:50%;}
+.sb-section{padding:20px 24px 8px; font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--sidebar-muted);}
+.sb-nav{display:flex; flex-direction:column;}
+.sb-item{padding:10px 24px; font-size:13.5px; display:flex; align-items:center; gap:12px; color:var(--sidebar-muted); border-left:2px solid transparent;}
+.sb-item .dot{width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0;}
+.sb-item.active{color:var(--paper); background:rgba(237,230,214,0.06); border-left-color:#D89A57;}
+.sb-foot{margin-top:auto; padding:18px 24px; border-top:1px solid var(--sidebar-line); font-size:12.5px;}
+.sb-user{display:flex; align-items:center; gap:10px;}
+.sb-avatar{width:30px; height:30px; border-radius:50%; background:#4B6B4A; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono'; font-size:12px; flex-shrink:0;}
+.sb-user .role{font-family:'IBM Plex Mono'; font-size:10.5px; color:var(--sidebar-muted); text-transform:uppercase;}
+.main{flex:1; display:flex; flex-direction:column; min-width:0;}
+.topbar{display:flex; justify-content:space-between; align-items:center; padding:20px 36px; border-bottom:1.5px solid var(--ink);}
+.topbar h1{font-size:22px;}
+.topbar .sub{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--muted); margin-top:4px;}
+.btn{padding:11px 20px; border-radius:var(--radius); border:1.5px solid var(--ink); background:var(--ink); color:var(--paper); font-family:'IBM Plex Mono'; font-size:12.5px; cursor:pointer;}
+.btn:hover{background:var(--oxblood); border-color:var(--oxblood);}
+.content{padding:30px 36px 70px; max-width:900px;}
+
+.rfq-brief{border:1.5px solid var(--ink); background:var(--card); padding:20px 24px; margin-bottom:26px; display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap;}
+.rfq-brief h3{font-size:17px; margin-bottom:6px;}
+.rfq-brief p{font-size:13px; color:var(--muted); max-width:480px;}
+.rfq-meta{font-family:'IBM Plex Mono'; font-size:12px; color:var(--ink-soft); text-align:right;}
+.rfq-meta .deadline{color:var(--oxblood); margin-top:4px;}
+
+.card{border:1.5px solid var(--ink); background:var(--card); margin-bottom:24px;}
+.card-head{padding:16px 24px; border-bottom:1.5px solid var(--ink);}
+.card-head h3{font-size:16.5px;}
+.card-body{padding:22px 24px;}
+
+.qt-table{width:100%; border-collapse:collapse;}
+.qt-table th{text-align:left; font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; color:var(--muted); padding:8px 10px; border-bottom:1px solid var(--paper-line);}
+.qt-table td{padding:8px 10px; border-bottom:1px solid var(--paper-line);}
+.qt-table input{width:100%; padding:8px 10px; border:1px solid var(--paper-line); background:var(--paper); font-size:13px; border-radius:2px;}
+.qt-table .item-name{font-size:13px;}
+.qt-total{display:flex; justify-content:flex-end; padding-top:16px; font-family:'IBM Plex Mono'; font-size:14px;}
+.qt-total b{margin-left:14px; font-size:18px;}
+
+.field-row{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+.field{margin-bottom:18px;}
+.field label{display:block; font-family:'IBM Plex Mono'; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); margin-bottom:8px;}
+.field input, .field textarea{width:100%; padding:11px 13px; border:1.5px solid var(--paper-line); background:var(--paper); font-family:'IBM Plex Sans'; font-size:13.5px; border-radius:var(--radius);}
+.field textarea{resize:vertical; min-height:80px;}
+
+.form-actions{display:flex; justify-content:flex-end; gap:12px;}
+.btn-ghost{background:transparent; color:var(--ink); border:1.5px solid var(--ink);}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-logo"><span class="sb-logo-mark"></span>VendorBridge</div>
+    <div class="sb-section">Overview</div>
+    <div class="sb-nav"><a class="sb-item"><span class="dot"></span>Dashboard</a></div>
+    <div class="sb-section">My requests</div>
+    <div class="sb-nav">
+      <a class="sb-item active"><span class="dot"></span>Open RFQs</a>
+      <a class="sb-item"><span class="dot"></span>My Quotations</a>
+      <a class="sb-item"><span class="dot"></span>Purchase Orders</a>
+    </div>
+    <div class="sb-foot"><div class="sb-user"><div class="sb-avatar">MP</div><div><div>Meridian Packaging</div><div class="role">Vendor</div></div></div></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><h1>Submit Quotation</h1><div class="sub">RFQ-0114 · MERIDIAN PACKAGING CO.</div></div>
+      <button class="btn">Submit quotation →</button>
+    </div>
+
+    <div class="content">
+      <div class="rfq-brief">
+        <div>
+          <h3>Industrial packaging supply — Q3 2026</h3>
+          <p>Corrugated packaging boxes and protective inserts for Q3 dispatch volume, delivered across two warehouse locations.</p>
+        </div>
+        <div class="rfq-meta">
+          <div>Requested by Riya Shah</div>
+          <div class="deadline">Deadline: 05 Sep 2026</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Pricing</h3></div>
+        <div class="card-body">
+          <table class="qt-table">
+            <thead><tr><th>Item</th><th style="width:90px;">Qty</th><th style="width:130px;">Unit Price (₹)</th><th style="width:130px;">Line Total (₹)</th></tr></thead>
+            <tbody>
+              <tr><td class="item-name">Corrugated box — Type A (18x12x10 in)</td><td>8,000</td><td><input value="18.50"></td><td class="mono">1,48,000</td></tr>
+              <tr><td class="item-name">Protective foam insert — standard</td><td>8,000</td><td><input value="6.75"></td><td class="mono">54,000</td></tr>
+              <tr><td class="item-name">Pallet wrap film — 25 micron</td><td>120</td><td><input value="1,020"></td><td class="mono">1,22,400</td></tr>
+            </tbody>
+          </table>
+          <div class="qt-total">Subtotal <b class="mono">₹3,24,400</b></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Delivery &amp; terms</h3></div>
+        <div class="card-body">
+          <div class="field-row">
+            <div class="field"><label>Delivery timeline</label><input value="14 business days from PO"></div>
+            <div class="field"><label>Quotation valid until</label><input type="date" value="2026-09-20"></div>
+          </div>
+          <div class="field"><label>Notes / comments</label><textarea>Pricing includes freight to both warehouse locations. Partial shipment available if required earlier for Warehouse 1.</textarea></div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-ghost btn">Save as draft</button>
+        <button class="btn">Submit quotation →</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

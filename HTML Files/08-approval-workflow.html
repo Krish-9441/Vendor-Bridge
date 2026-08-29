@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VendorBridge — Approval Workflow</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --paper:#EDE6D6; --paper-deep:#E4DBC7; --paper-line:#C9C0A8; --ink:#231F16; --ink-soft:#4A4535;
+  --muted:#6b6349; --oxblood:#8A3223; --green:#4B6B4A; --card:#F4EFE3; --radius:2px;
+  --sidebar:#231F16; --sidebar-line:rgba(237,230,214,0.14); --sidebar-text:#D8CFB8; --sidebar-muted:#8C8368;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',sans-serif; line-height:1.5;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+h1,h2,h3{font-family:'Fraunces',serif; font-weight:600;}
+a{color:inherit; text-decoration:none;}
+.app{display:flex; min-height:100vh;}
+.sidebar{width:238px; background:var(--sidebar); color:var(--sidebar-text); flex-shrink:0; display:flex; flex-direction:column; padding:26px 0;}
+.sb-logo{display:flex; align-items:center; gap:10px; font-family:'Fraunces'; font-weight:700; font-size:17px; padding:0 24px 26px; border-bottom:1px solid var(--sidebar-line);}
+.sb-logo-mark{width:20px;height:20px;border:2px solid #D89A57;border-radius:50%;position:relative;flex-shrink:0;}
+.sb-logo-mark::before{content:"";position:absolute;inset:4px;border:1px solid #D89A57;border-radius:50%;}
+.sb-section{padding:20px 24px 8px; font-family:'IBM Plex Mono'; font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--sidebar-muted);}
+.sb-nav{display:flex; flex-direction:column;}
+.sb-item{padding:10px 24px; font-size:13.5px; display:flex; align-items:center; gap:12px; color:var(--sidebar-muted); border-left:2px solid transparent;}
+.sb-item .dot{width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0;}
+.sb-item.active{color:var(--paper); background:rgba(237,230,214,0.06); border-left-color:#D89A57;}
+.sb-foot{margin-top:auto; padding:18px 24px; border-top:1px solid var(--sidebar-line); font-size:12.5px;}
+.sb-user{display:flex; align-items:center; gap:10px;}
+.sb-avatar{width:30px; height:30px; border-radius:50%; background:#8A3223; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono'; font-size:12px; flex-shrink:0;}
+.sb-user .role{font-family:'IBM Plex Mono'; font-size:10.5px; color:var(--sidebar-muted); text-transform:uppercase;}
+.main{flex:1; display:flex; flex-direction:column; min-width:0;}
+.topbar{display:flex; justify-content:space-between; align-items:center; padding:20px 36px; border-bottom:1.5px solid var(--ink);}
+.topbar h1{font-size:22px;}
+.topbar .sub{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--muted); margin-top:4px;}
+.content{padding:30px 36px 70px; display:grid; grid-template-columns:1.5fr 1fr; gap:24px; align-items:start;}
+
+.card{border:1.5px solid var(--ink); background:var(--card);}
+.card-head{padding:16px 24px; border-bottom:1.5px solid var(--ink);}
+.card-head h3{font-size:16.5px;}
+.card-body{padding:22px 24px;}
+
+.summary-row{display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--paper-line); font-size:13.5px;}
+.summary-row:last-child{border-bottom:none;}
+.summary-row .k{color:var(--muted); font-family:'IBM Plex Mono'; font-size:11.5px; text-transform:uppercase;}
+.summary-row .v{font-weight:500;}
+.summary-row .v.mono{font-family:'IBM Plex Mono'; font-weight:400;}
+.summary-row .v.total{font-family:'IBM Plex Mono'; font-size:18px; color:var(--oxblood);}
+
+.remark-field{margin-top:18px;}
+.remark-field label{display:block; font-family:'IBM Plex Mono'; font-size:11px; text-transform:uppercase; color:var(--ink-soft); margin-bottom:8px;}
+.remark-field textarea{width:100%; min-height:80px; padding:12px; border:1.5px solid var(--paper-line); background:var(--paper); font-family:'IBM Plex Sans'; font-size:13.5px; border-radius:var(--radius); resize:vertical;}
+
+.action-row{display:flex; gap:12px; margin-top:20px;}
+.approve-btn{flex:1; padding:14px; border:1.5px solid var(--green); background:var(--green); color:#fff; font-family:'IBM Plex Mono'; font-size:13px; cursor:pointer; border-radius:var(--radius);}
+.reject-btn{flex:1; padding:14px; border:1.5px solid var(--oxblood); background:transparent; color:var(--oxblood); font-family:'IBM Plex Mono'; font-size:13px; cursor:pointer; border-radius:var(--radius);}
+
+/* Timeline */
+.timeline{padding:22px 24px;}
+.tl-item{display:flex; gap:16px; padding-bottom:24px; position:relative;}
+.tl-item:last-child{padding-bottom:0;}
+.tl-item::before{content:""; position:absolute; left:9px; top:22px; bottom:0; width:1px; background:var(--paper-line);}
+.tl-item:last-child::before{display:none;}
+.tl-dot{width:19px; height:19px; border-radius:50%; border:2px solid var(--ink); background:var(--card); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; z-index:1;}
+.tl-dot.done{background:var(--green); border-color:var(--green); color:#fff;}
+.tl-dot.current{background:var(--oxblood); border-color:var(--oxblood); color:#fff;}
+.tl-dot.pending{border-color:var(--paper-line); color:var(--paper-line);}
+.tl-content h4{font-size:13.5px; font-weight:600; margin-bottom:3px;}
+.tl-content .meta{font-family:'IBM Plex Mono'; font-size:11px; color:var(--muted);}
+.tl-content .remark{font-size:12.5px; color:var(--ink-soft); margin-top:6px; font-style:italic;}
+
+.status-pill{display:inline-block; font-family:'IBM Plex Mono'; font-size:11px; text-transform:uppercase; padding:5px 12px; border-radius:20px; background:rgba(138,50,35,0.12); color:var(--oxblood); margin-bottom:4px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-logo"><span class="sb-logo-mark"></span>VendorBridge</div>
+    <div class="sb-section">Overview</div>
+    <div class="sb-nav"><a class="sb-item"><span class="dot"></span>Dashboard</a><a class="sb-item"><span class="dot"></span>Activity &amp; Logs</a></div>
+    <div class="sb-section">Procurement</div>
+    <div class="sb-nav">
+      <a class="sb-item"><span class="dot"></span>Vendors</a>
+      <a class="sb-item"><span class="dot"></span>RFQs</a>
+      <a class="sb-item"><span class="dot"></span>Quotations</a>
+      <a class="sb-item active"><span class="dot"></span>Approvals</a>
+      <a class="sb-item"><span class="dot"></span>Purchase Orders</a>
+      <a class="sb-item"><span class="dot"></span>Invoices</a>
+    </div>
+    <div class="sb-section">Insights</div>
+    <div class="sb-nav"><a class="sb-item"><span class="dot"></span>Reports &amp; Analytics</a></div>
+    <div class="sb-foot"><div class="sb-user"><div class="sb-avatar">AK</div><div><div>Arjun Kapoor</div><div class="role">Manager / Approver</div></div></div></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><h1>Approval — QT-0271</h1><div class="sub">MERIDIAN PACKAGING CO. · RFQ-0114</div></div>
+    </div>
+
+    <div class="content">
+      <div>
+        <div class="card">
+          <div class="card-head"><h3>Request summary</h3></div>
+          <div class="card-body">
+            <span class="status-pill">Pending your review</span>
+            <div class="summary-row"><span class="k">Vendor</span><span class="v">Meridian Packaging Co.</span></div>
+            <div class="summary-row"><span class="k">RFQ</span><span class="v">RFQ-0114 · Industrial packaging supply — Q3</span></div>
+            <div class="summary-row"><span class="k">Requested by</span><span class="v">Riya Shah, Procurement Officer</span></div>
+            <div class="summary-row"><span class="k">Delivery timeline</span><span class="v mono">14 business days</span></div>
+            <div class="summary-row"><span class="k">Submitted</span><span class="v mono">18 Aug 2026, 3:42 PM</span></div>
+            <div class="summary-row"><span class="k">Total value</span><span class="v total">₹3,24,400</span></div>
+
+            <div class="remark-field">
+              <label>Approval remarks</label>
+              <textarea placeholder="Add a note for the record — visible in the audit trail...">Pricing is competitive against the other two quotes; delivery timeline works for our Q3 dispatch window.</textarea>
+            </div>
+            <div class="action-row">
+              <button class="approve-btn">✓ Approve request</button>
+              <button class="reject-btn">✕ Reject</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Approval timeline</h3></div>
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-dot done">✓</div>
+            <div class="tl-content">
+              <h4>RFQ created</h4>
+              <div class="meta">Riya Shah · 12 Aug 2026, 10:04 AM</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot done">✓</div>
+            <div class="tl-content">
+              <h4>Quotation submitted</h4>
+              <div class="meta">Meridian Packaging Co. · 18 Aug 2026, 3:42 PM</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot done">✓</div>
+            <div class="tl-content">
+              <h4>Selected after comparison</h4>
+              <div class="meta">Riya Shah · 19 Aug 2026, 11:15 AM</div>
+              <div class="remark">"Lowest price among three quotes received."</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot current">●</div>
+            <div class="tl-content">
+              <h4>Awaiting manager approval</h4>
+              <div class="meta">Arjun Kapoor · in progress</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot pending">○</div>
+            <div class="tl-content">
+              <h4>Purchase order generation</h4>
+              <div class="meta">Not started</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
